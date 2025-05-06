@@ -1,0 +1,176 @@
+import tkinter as tk
+from tkinter import ttk
+import random
+import time
+
+class SortingVisualizer:
+    def __init__(self, root):
+        self.root = root
+        self.root.title('Sorting Algorithm Visualizer')
+        self.root.geometry('1000x650')
+        self.root.config(bg='white')
+
+        self.selected_algorithm = tk.StringVar()
+        self.speed_name = tk.StringVar()
+        self.data = []
+
+        ui_frame = tk.Frame(self.root, width=1000, height=250, bg='lightgray')
+        ui_frame.grid(row=0, column=0, padx=10, pady=5)
+
+        self.canvas = tk.Canvas(self.root, width=980, height=400, bg='white')
+        self.canvas.grid(row=1, column=0, padx=10, pady=5)
+
+        tk.Label(ui_frame, text='Algorithm:', bg='lightgray').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+        algo_menu = ttk.Combobox(ui_frame, textvariable=self.selected_algorithm, values=['Bubble Sort', 'Insertion Sort', 'Selection Sort', 'Merge Sort', 'Quick Sort'])
+        algo_menu.grid(row=0, column=1, padx=5, pady=5)
+        algo_menu.current(0)
+
+        tk.Label(ui_frame, text='Speed:', bg='lightgray').grid(row=0, column=2, padx=5, pady=5, sticky='w')
+        speed_menu = ttk.Combobox(ui_frame, textvariable=self.speed_name, values=['Fast', 'Medium', 'Slow'])
+        speed_menu.grid(row=0, column=3, padx=5, pady=5)
+        speed_menu.current(0)
+
+        tk.Label(ui_frame, text='Array Size:', bg='lightgray').grid(row=0, column=4, padx=5, pady=5, sticky='w')
+        self.size_scale = tk.Scale(ui_frame, from_=10, to=100, orient=tk.HORIZONTAL, bg='lightgray')
+        self.size_scale.set(20)
+        self.size_scale.grid(row=0, column=5, padx=5, pady=5)
+
+        tk.Button(ui_frame, text='Generate Array', command=self.generate_array, bg='skyblue').grid(row=1, column=1, padx=5, pady=10)
+        tk.Button(ui_frame, text='Randomize Array', command=self.randomize_array, bg='orange').grid(row=1, column=2, padx=5, pady=10)
+        tk.Button(ui_frame, text='Start Sorting', command=self.start_sorting, bg='green', fg='white').grid(row=1, column=3, padx=5, pady=10)
+
+    def draw_array(self, color_array):
+        self.canvas.delete("all")
+        c_height = 400
+        c_width = 980
+        if len(self.data) == 0:
+            return
+        x_width = c_width / (len(self.data) + 1)
+        offset = 5
+        spacing = 5
+        normalized_data = [i / max(self.data) if max(self.data) != 0 else 0 for i in self.data]
+
+        for i, height in enumerate(normalized_data):
+            x0 = i * x_width + offset + spacing
+            y0 = c_height - height * 350
+            x1 = (i + 1) * x_width + offset
+            y1 = c_height
+            self.canvas.create_rectangle(x0, y0, x1, y1, fill=color_array[i])
+
+        self.root.update_idletasks()
+
+    def generate_array(self):
+        size = self.size_scale.get()
+        self.data = [random.randint(10, 100) for _ in range(size)]
+        self.draw_array(['skyblue' for _ in range(len(self.data))])
+
+    def randomize_array(self):
+        random.shuffle(self.data)
+        self.draw_array(['skyblue' for _ in range(len(self.data))])
+
+    def set_speed(self):
+        if self.speed_name.get() == 'Slow':
+            return 0.3
+        elif self.speed_name.get() == 'Medium':
+            return 0.1
+        else:
+            return 0.01
+
+    def start_sorting(self):
+        time_tick = self.set_speed()
+
+        if self.selected_algorithm.get() == 'Bubble Sort':
+            self.bubble_sort(time_tick)
+        elif self.selected_algorithm.get() == 'Insertion Sort':
+            self.insertion_sort(time_tick)
+        elif self.selected_algorithm.get() == 'Selection Sort':
+            self.selection_sort(time_tick)
+        elif self.selected_algorithm.get() == 'Merge Sort':
+            self.merge_sort(0, len(self.data)-1, time_tick)
+            self.draw_array(['green' for _ in range(len(self.data))])
+        elif self.selected_algorithm.get() == 'Quick Sort':
+            self.quick_sort(0, len(self.data)-1, time_tick)
+            self.draw_array(['green' for _ in range(len(self.data))])
+
+    def bubble_sort(self, time_tick):
+        for i in range(len(self.data)-1):
+            for j in range(len(self.data)-i-1):
+                self.draw_array(['yellow' if x == j or x == j+1 else 'skyblue' for x in range(len(self.data))])
+                time.sleep(time_tick)
+                if self.data[j] > self.data[j+1]:
+                    self.data[j], self.data[j+1] = self.data[j+1], self.data[j]
+                    self.draw_array(['red' if x == j or x == j+1 else 'skyblue' for x in range(len(self.data))])
+                    time.sleep(time_tick)
+        self.draw_array(['green' for _ in range(len(self.data))])
+
+    def insertion_sort(self, time_tick):
+        for i in range(1, len(self.data)):
+            key = self.data[i]
+            j = i-1
+            while j >= 0 and self.data[j] > key:
+                self.data[j+1] = self.data[j]
+                j -= 1
+                self.draw_array(['yellow' if x == j or x == j+1 else 'skyblue' for x in range(len(self.data))])
+                time.sleep(time_tick)
+            self.data[j+1] = key
+        self.draw_array(['green' for _ in range(len(self.data))])
+
+    def selection_sort(self, time_tick):
+        for i in range(len(self.data)):
+            min_idx = i
+            for j in range(i+1, len(self.data)):
+                self.draw_array(['yellow' if x == j or x == min_idx else 'skyblue' for x in range(len(self.data))])
+                time.sleep(time_tick)
+                if self.data[min_idx] > self.data[j]:
+                    min_idx = j
+            self.data[i], self.data[min_idx] = self.data[min_idx], self.data[i]
+            self.draw_array(['red' if x == i or x == min_idx else 'skyblue' for x in range(len(self.data))])
+            time.sleep(time_tick)
+        self.draw_array(['green' for _ in range(len(self.data))])
+
+    def merge_sort(self, left, right, time_tick):
+        if left < right:
+            mid = (left + right) // 2
+            self.merge_sort(left, mid, time_tick)
+            self.merge_sort(mid+1, right, time_tick)
+            self.merge(left, mid, right, time_tick)
+
+    def merge(self, left, mid, right, time_tick):
+        left_part = self.data[left:mid+1]
+        right_part = self.data[mid+1:right+1]
+
+        left_idx = right_idx = 0
+        for data_idx in range(left, right+1):
+            if left_idx < len(left_part) and (right_idx >= len(right_part) or left_part[left_idx] <= right_part[right_idx]):
+                self.data[data_idx] = left_part[left_idx]
+                left_idx += 1
+            else:
+                self.data[data_idx] = right_part[right_idx]
+                right_idx += 1
+            self.draw_array(['green' if left <= x <= right else 'skyblue' for x in range(len(self.data))])
+            time.sleep(time_tick)
+
+    def quick_sort(self, low, high, time_tick):
+        if low < high:
+            pi = self.partition(low, high, time_tick)
+            self.quick_sort(low, pi-1, time_tick)
+            self.quick_sort(pi+1, high, time_tick)
+
+    def partition(self, low, high, time_tick):
+        pivot = self.data[high]
+        i = low - 1
+        for j in range(low, high):
+            self.draw_array(['yellow' if x == j or x == i else 'skyblue' for x in range(len(self.data))])
+            time.sleep(time_tick)
+            if self.data[j] < pivot:
+                i += 1
+                self.data[i], self.data[j] = self.data[j], self.data[i]
+                self.draw_array(['red' if x == j or x == i else 'skyblue' for x in range(len(self.data))])
+                time.sleep(time_tick)
+        self.data[i+1], self.data[high] = self.data[high], self.data[i+1]
+        return i+1
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SortingVisualizer(root)
+    root.mainloop()
